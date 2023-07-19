@@ -1,6 +1,8 @@
 package com.example.aichatbox
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.aichatbox.adapter.MessageAdapter
@@ -27,6 +29,24 @@ class MainActivity : AppCompatActivity() {
         recyclerView.setHasFixedSize(true)
 
         binding.sendButton.setOnClickListener() { sendMessage(recyclerView) }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.reset_chat_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_reset_chat -> {
+                messageStore.clear()
+                binding.messageInput.text?.clear()
+                binding.chatHistory.adapter?.notifyDataSetChanged()
+                chatService.reset()
+                return true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun sendMessage(recyclerView: RecyclerView) {

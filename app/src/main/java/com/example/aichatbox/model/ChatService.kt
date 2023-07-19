@@ -30,4 +30,8 @@ class ChatService {
             else -> "Sorry, I can't help you with that."
         }
     }
+
+    fun reset() {
+        // Nothing to reset yet.
+    }
 }
