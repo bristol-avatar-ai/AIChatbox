@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">AI Chatbox</string>
+    <string name="send_message_hint">Ask me anything</string>
+    <string name="send_button_description">Button for sending messages.</string>
+    <string name="example_message">This is an example message.</string>
+</resources>
