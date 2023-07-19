@@ -7,8 +7,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.aichatbox.R
-import com.example.aichatbox.const.Sender.USER
 import com.example.aichatbox.data.MessageStore
+import com.example.aichatbox.model.ChatMessage
 
 class MessageAdapter(
     private val context: Context,
@@ -17,7 +17,7 @@ class MessageAdapter(
 
     class MessageViewHolder(private val view: View, viewType: Int) : RecyclerView.ViewHolder(view) {
         val textView: TextView = when(viewType) {
-            USER -> view.findViewById(R.id.user_message_title)
+            ChatMessage.USER -> view.findViewById(R.id.user_message_title)
             else -> view.findViewById(R.id.ai_message_title)
         }
     }
@@ -28,7 +28,7 @@ class MessageAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
         val adapterLayout = when(viewType) {
-            USER -> LayoutInflater.from(parent.context)
+            ChatMessage.USER -> LayoutInflater.from(parent.context)
                 .inflate(R.layout.user_message, parent, false)
             else -> LayoutInflater.from(parent.context)
                 .inflate(R.layout.ai_message, parent, false)

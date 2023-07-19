@@ -8,7 +8,6 @@ import com.example.aichatbox.data.MessageStore
 import com.example.aichatbox.databinding.ActivityMainBinding
 import com.example.aichatbox.model.ChatMessage
 import com.example.aichatbox.model.ChatService
-import com.example.aichatbox.const.Sender
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,12 +37,12 @@ class MainActivity : AppCompatActivity() {
             // Press a button, record a message
             // Convert voice to text
 
-            messageStore.addMessage(ChatMessage(message, Sender.USER))
+            messageStore.addMessage(ChatMessage(message, ChatMessage.USER))
             binding.messageInput.text?.clear()
             adapter?.notifyItemInserted(0)
             recyclerView.scrollToPosition(0)
 
-            messageStore.addMessage(ChatMessage(chatService.getResponse(message), Sender.AI))
+            messageStore.addMessage(ChatMessage(chatService.getResponse(message), ChatMessage.AI))
             adapter?.notifyItemInserted(0)
             recyclerView.scrollToPosition(0)
 
