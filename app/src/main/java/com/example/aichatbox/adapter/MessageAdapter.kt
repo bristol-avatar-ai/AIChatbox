@@ -11,7 +11,6 @@ import com.example.aichatbox.data.MessageStore
 import com.example.aichatbox.model.ChatMessage
 
 class MessageAdapter(
-    private val context: Context,
     private val messageStore: MessageStore
     ): RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
