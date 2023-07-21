@@ -11,6 +11,7 @@ class ChatBoxViewModel : ViewModel() {
 
     // Store message history as MutableLiveData backing property.
     private val _messages = MutableLiveData<MutableList<ChatMessage>>()
+    // messages is public read-only.
     val messages : MutableLiveData<MutableList<ChatMessage>>
         get() = _messages
 
