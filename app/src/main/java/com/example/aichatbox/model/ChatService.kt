@@ -1,15 +1,32 @@
 package com.example.aichatbox.model
 
 class ChatService {
-    var message = ""
+    
+    companion object {
+        const val NONE : Int = 1
+        const val LOCATION : Int = 2
+        const val INFORMATION : Int = 3
+    }
+
+    private lateinit var inputMessage: String
+    
+    // Backing properties: public read-only.
+    // User request type.
+    private var _userRequest : Int = NONE
+    val userRequest: Int
+        get() = _userRequest
+    // Destination string, used for LOCATION requests.
+    private var _destination : String? = null
+    val destination: String?
+        get() = _destination
 
     fun getResponse(message: String): String {
-        this.message = message
+        inputMessage = message
 
         return when {
-            message.contains(Regex("(?i)hi|hello")) -> useIntentGreeting()
-            message.contains(Regex("(?i)name")) -> useIntentName()
-            message.contains(Regex("(?i)get to|directions|go to")) -> useIntentDirections()
+            inputMessage.contains(Regex("(?i)hi|hello")) -> useIntentGreeting()
+            inputMessage.contains(Regex("(?i)name")) -> useIntentName()
+            inputMessage.contains(Regex("(?i)get to|directions|go to")) -> useIntentDirections()
             else -> "Sorry, I can't help you with that."
         }
     }
@@ -24,9 +41,9 @@ class ChatService {
 
     private fun useIntentDirections(): String {
         return when {
-            message.contains(Regex("(?i)robot dog")) -> "Turn right at the end of the main hall. You'll find the robot dog right there!"
-            message.contains(Regex("(?i)quantum computer")) -> "The quantum computer is in Room 1031, you'll find it by turning left as soon as you enter the lobby."
-            message.contains(Regex("(?i)toilet|toilets")) -> "The toilets are just to the right of the main lobby area."
+            inputMessage.contains(Regex("(?i)robot dog")) -> "Turn right at the end of the main hall. You'll find the robot dog right there!"
+            inputMessage.contains(Regex("(?i)quantum computer")) -> "The quantum computer is in Room 1031, you'll find it by turning left as soon as you enter the lobby."
+            inputMessage.contains(Regex("(?i)toilet|toilets")) -> "The toilets are just to the right of the main lobby area."
             else -> "Sorry, I can't help you with that."
         }
     }
