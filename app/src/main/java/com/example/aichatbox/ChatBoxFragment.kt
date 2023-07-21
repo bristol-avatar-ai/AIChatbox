@@ -1,7 +1,10 @@
 package com.example.aichatbox
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
+import android.media.MediaRecorder
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.TextToSpeech.OnInitListener
@@ -14,6 +17,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.PackageManagerCompat.LOG_TAG
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -26,9 +31,12 @@ import com.example.aichatbox.model.ChatService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.IOException
 import java.util.Locale
 
 const val TAG = "ChatBoxFragment"
+private const val REQUEST_RECORD_AUDIO_PERMISSION = 200
 
 /**
  * Fragment containing chat interface and TextToSpeech services.
@@ -37,19 +45,42 @@ class ChatBoxFragment : Fragment(), OnInitListener {
 
     // Attach chat history ViewModel. Delegate to viewModels to retain its value through configuration changes.
     private val viewModel: ChatBoxViewModel by viewModels()
+
     // Initialise ChatService for message responses.
     private val chatService = ChatService()
     // Set to true to enable user chat input.
     private var chatBoxReady = false
+
     // TextToSpeech class for audio responses.
     private lateinit var textToSpeech: TextToSpeech
     // Set to true when TextToSpeech service is ready.
     private var textToSpeechReady = false
 
+    // MediaRecorder class to record audio.
+    private var mediaRecorder: MediaRecorder? = null
+    private lateinit var recordingFile: File
+    // Requesting permission to RECORD_AUDIO
+    private var permissionToRecordAccepted = false
+    private var permissions: Array<String> = arrayOf(Manifest.permission.RECORD_AUDIO)
+
     private var _binding: FragmentChatBoxBinding? = null
     private val binding get() = _binding!!
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: MessageAdapter
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        permissionToRecordAccepted = if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        } else {
+            false
+        }
+        // if (!permissionToRecordAccepted) TODO: handle no permissions
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -62,7 +93,13 @@ class ChatBoxFragment : Fragment(), OnInitListener {
         return binding.root
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        // Request audio permission.
+        ActivityCompat.requestPermissions(requireActivity(), permissions, REQUEST_RECORD_AUDIO_PERMISSION)
+        // Save the recordings to the cache.
+        recordingFile = File.createTempFile("recording", ".3gp", requireContext().cacheDir)
+
         recyclerView = binding.chatHistory
         // Create and assign adaptor to RecyclerView.
         adapter = MessageAdapter(viewModel)
@@ -83,7 +120,21 @@ class ChatBoxFragment : Fragment(), OnInitListener {
             if(chatBoxReady) { inputReceived() }
         }
 
-        setExitMessageEditListener() // See below.
+        binding.recordButton.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    startRecording()
+                }
+                MotionEvent.ACTION_UP -> {
+                    stopRecording()
+                    // convertAudioToString()
+                    recordingFile.delete()
+                }
+            }
+            false
+        }
+
+        setMessageEditExitListener()
     }
 
     /*
@@ -91,7 +142,7 @@ class ChatBoxFragment : Fragment(), OnInitListener {
     * the chatHistory RecyclerView is touched.
      */
     @SuppressLint("ClickableViewAccessibility")
-    private fun setExitMessageEditListener() {
+    private fun setMessageEditExitListener() {
         recyclerView.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 val manager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE)
@@ -133,6 +184,8 @@ class ChatBoxFragment : Fragment(), OnInitListener {
         textToSpeech.stop()
         textToSpeech.shutdown()
         textToSpeechReady = false
+        mediaRecorder?.release()
+        mediaRecorder = null
         _binding = null
     }
 
@@ -218,6 +271,29 @@ class ChatBoxFragment : Fragment(), OnInitListener {
                 addNewMessage(reply, ChatMessage.AI)
             }
         }
+    }
+
+    private fun startRecording() {
+        mediaRecorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+            setOutputFile(recordingFile?.absolutePath)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            try {
+                prepare()
+            } catch (e: IOException) {
+                Log.e(TAG, "Failed to prepare MediaRecorder\n${e.stackTraceToString()}")
+            }
+            start()
+        }
+    }
+
+    private fun stopRecording() {
+        mediaRecorder?.apply {
+            stop()
+            release()
+        }
+        mediaRecorder = null
     }
 
 }
