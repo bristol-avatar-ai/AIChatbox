@@ -22,7 +22,6 @@ import com.example.aichatbox.data.ChatBoxViewModel
 import com.example.aichatbox.databinding.FragmentChatBoxBinding
 import com.example.aichatbox.model.ChatMessage
 import com.example.aichatbox.model.ChatService
-import com.google.android.material.textfield.TextInputEditText
 import java.util.Locale
 
 const val TAG = "ChatBoxFragment"
@@ -191,11 +190,13 @@ class ChatBoxFragment : Fragment(), OnInitListener {
     }
 
     /*
-    * Adds a new message to the ModelView, then notifies the
+    * Adds a new message to the ViewModel, then notifies the
     * RecyclerView to rebind the items.
      */
     private fun newMessage(message: String, sender: Int) {
-        viewModel.addMessage(ChatMessage(message, sender))
+        viewModel.addMessage(
+            ChatMessage(message, sender)
+        )
         adapter.notifyItemInserted(0)
         recyclerView.scrollToPosition(0)
     }
