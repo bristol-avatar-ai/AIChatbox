@@ -16,12 +16,16 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.example.aichatbox.adapter.MessageAdapter
 import com.example.aichatbox.data.ChatBoxViewModel
 import com.example.aichatbox.databinding.FragmentChatBoxBinding
 import com.example.aichatbox.model.ChatMessage
 import com.example.aichatbox.model.ChatService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 const val TAG = "ChatBoxFragment"
@@ -167,9 +171,8 @@ class ChatBoxFragment : Fragment(), OnInitListener {
     }
 
     /*
-    * Processes user message input. Adds the new user message,
-    * then generates a reply. Generates and audio reply and plays
-    * it if TextToSpeech has been initialised correctly.
+    * Processes user message input. Adds the new
+    * user message, then generates a reply.
      */
     private fun inputReceived() {
         val message = binding.messageInput.text.toString()
@@ -177,15 +180,8 @@ class ChatBoxFragment : Fragment(), OnInitListener {
         binding.messageInput.text?.clear()
 
         if(message.isNotEmpty()) {
-            newMessage(message, ChatMessage.USER)
-            // Generate reply with ChatService.
-            val reply = chatService.getResponse(message)
-            newMessage(reply, ChatMessage.AI)
-            // Use TextToSpeech if ready.
-            if(textToSpeechReady) {
-                textToSpeech.speak(reply,
-                    TextToSpeech.QUEUE_FLUSH, null, null)
-            }
+            addNewMessage(message, ChatMessage.USER)
+            generateReply(message)
         }
     }
 
@@ -193,12 +189,35 @@ class ChatBoxFragment : Fragment(), OnInitListener {
     * Adds a new message to the ViewModel, then notifies the
     * RecyclerView to rebind the items.
      */
-    private fun newMessage(message: String, sender: Int) {
+    private fun addNewMessage(message: String, sender: Int) {
         viewModel.addMessage(
             ChatMessage(message, sender)
         )
         adapter.notifyItemInserted(0)
         recyclerView.scrollToPosition(0)
+    }
+
+
+    /*
+    * Gets a response to the input message with ChatService. Generates an audio
+    * reply and plays it if TextToSpeech has been initialised correctly.
+    * Coroutines are use to prevent blocking the main thread.
+     */
+    private fun generateReply(message: String) {
+        lifecycleScope.launch(Dispatchers.Default) {
+            // Generate reply with ChatService.
+            val reply = chatService.getResponse(message)
+
+            // Use TextToSpeech if ready.
+            if(textToSpeechReady) {
+                textToSpeech.speak(reply,
+                    TextToSpeech.QUEUE_FLUSH, null, null)
+            }
+            // Switch back to the main thread before updating the UI.
+            withContext(Dispatchers.Main) {
+                addNewMessage(reply, ChatMessage.AI)
+            }
+        }
     }
 
 }
