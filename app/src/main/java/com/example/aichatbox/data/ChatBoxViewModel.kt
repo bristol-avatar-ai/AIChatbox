@@ -1,5 +1,6 @@
 package com.example.aichatbox.data
 
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.aichatbox.model.ChatMessage
 
@@ -8,15 +9,22 @@ import com.example.aichatbox.model.ChatMessage
  */
 class ChatBoxViewModel : ViewModel() {
 
-    // Mutable list of chat messages.
-    private val messages: MutableList<ChatMessage> = mutableListOf()
+    // Store message history as MutableLiveData backing property.
+    private val _messages = MutableLiveData<MutableList<ChatMessage>>()
+    val messages : MutableLiveData<MutableList<ChatMessage>>
+        get() = _messages
+
+    // Initialise mutable list of chat _messages.
+    init {
+        _messages.value = mutableListOf()
+    }
 
     /*
     * Adds a new message to the chat history.
-    * Newest messages are stored first.
+    * Newest _messages are stored first.
     */
     fun addMessage(message: ChatMessage) {
-        messages.add(0, message)
+        _messages.value?.add(0, message)
     }
 
     /*
@@ -24,21 +32,21 @@ class ChatBoxViewModel : ViewModel() {
     * Used in the chat_history RecyclerView.
     */
     fun getMessage(index: Int): ChatMessage {
-        return messages[index]
+        return _messages.value!![index]
     }
 
     /*
-    * Get the number of messages stored.
+    * Get the number of _messages stored.
     */
     fun getChatHistorySize(): Int {
-        return messages.size
+        return _messages.value?.size ?: 0
     }
 
     /*
     * Clear the message history.
     */
     fun clearChatHistory() {
-        messages.clear()
+        _messages.value?.clear()
     }
 
 }

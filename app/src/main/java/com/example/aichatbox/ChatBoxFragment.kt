@@ -29,6 +29,7 @@ class ChatBoxFragment : Fragment() {
     private var _binding: FragmentChatBoxBinding? = null
     private val binding get() = _binding!!
     private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: MessageAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,9 +41,16 @@ class ChatBoxFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         recyclerView = binding.chatHistory
-        recyclerView.adapter = MessageAdapter(viewModel)
+        adapter = MessageAdapter(viewModel)
+        recyclerView.adapter = this.adapter
         recyclerView.setHasFixedSize(true)
 
+        // Observe the scrambledCharArray LiveData, passing in the LifecycleOwner and the observer.
+        viewModel.messages.observe(viewLifecycleOwner) {
+            // TODO: Migrate adaptor updates here.
+        }
+
+        // Sends message when the send button is clicked.
         binding.sendButton.setOnClickListener {
             sendMessage()
         }
@@ -79,7 +87,6 @@ class ChatBoxFragment : Fragment() {
 
     private fun sendMessage() {
         val message = binding.messageInput.text.toString()
-        val adapter = recyclerView.adapter
 
         if(message.isNotEmpty()) {
             // Press a button, record a message
@@ -87,11 +94,11 @@ class ChatBoxFragment : Fragment() {
 
             viewModel.addMessage(ChatMessage(message, ChatMessage.USER))
             binding.messageInput.text?.clear()
-            adapter?.notifyItemInserted(0)
+            adapter.notifyItemInserted(0)
             recyclerView.scrollToPosition(0)
 
             viewModel.addMessage(ChatMessage(chatService.getResponse(message), ChatMessage.AI))
-            adapter?.notifyItemInserted(0)
+            adapter.notifyItemInserted(0)
             recyclerView.scrollToPosition(0)
 
             // Enter some code that converts the response to audio.
