@@ -5,9 +5,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
+import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.TextToSpeech.OnInitListener
+import android.text.Editable
+import android.text.InputType
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
@@ -17,6 +21,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.PackageManagerCompat.LOG_TAG
 import androidx.fragment.app.Fragment
@@ -28,6 +33,7 @@ import com.example.aichatbox.data.ChatBoxViewModel
 import com.example.aichatbox.databinding.FragmentChatBoxBinding
 import com.example.aichatbox.model.ChatMessage
 import com.example.aichatbox.model.ChatService
+import com.example.aichatbox.network.SpeechToTextApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,11 +69,14 @@ class ChatBoxFragment : Fragment(), OnInitListener {
     private var permissionToRecordAccepted = false
     private var permissions: Array<String> = arrayOf(Manifest.permission.RECORD_AUDIO)
 
+    private var voiceMode = true
+
     private var _binding: FragmentChatBoxBinding? = null
     private val binding get() = _binding!!
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: MessageAdapter
 
+    // TODO: Tidy this function
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
@@ -93,12 +102,13 @@ class ChatBoxFragment : Fragment(), OnInitListener {
         return binding.root
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         // Request audio permission.
         ActivityCompat.requestPermissions(requireActivity(), permissions, REQUEST_RECORD_AUDIO_PERMISSION)
         // Save the recordings to the cache.
-        recordingFile = File.createTempFile("recording", ".3gp", requireContext().cacheDir)
+        recordingFile = File.createTempFile("recording", ".ogg", requireContext().cacheDir)
 
         recyclerView = binding.chatHistory
         // Create and assign adaptor to RecyclerView.
@@ -116,23 +126,39 @@ class ChatBoxFragment : Fragment(), OnInitListener {
         }
 
         // Sends message when the send button is clicked.
-        binding.sendButton.setOnClickListener {
-            if(chatBoxReady) { inputReceived() }
+        binding.actionButton.setOnClickListener {
+            if(!voiceMode && chatBoxReady) { inputReceived() }
         }
 
-        binding.recordButton.setOnTouchListener { _, event ->
+        binding.actionButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    startRecording()
+                    if(voiceMode) {startRecording()}
                 }
                 MotionEvent.ACTION_UP -> {
-                    stopRecording()
-                    // convertAudioToString()
-                    recordingFile.delete()
+                    if(voiceMode) {
+                        stopRecording()
+                        audioInputReceived()
+                    }
                 }
             }
             false
         }
+
+        binding.messageInput.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                // Also check for permissionToRecordAccepted
+                voiceMode = if(binding.messageInput.text.isNullOrEmpty()) {
+                    binding.actionButton.setImageResource(R.drawable.ic_speak_message)
+                    true
+                } else {
+                    binding.actionButton.setImageResource(R.drawable.ic_send_message)
+                    false
+                }
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
 
         setMessageEditExitListener()
     }
@@ -273,12 +299,15 @@ class ChatBoxFragment : Fragment(), OnInitListener {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun startRecording() {
+        binding.messageInputLayout.hint = "Recording..."
+        binding.messageInput.isFocusable = false
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-            setOutputFile(recordingFile?.absolutePath)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            setOutputFormat(MediaRecorder.OutputFormat.OGG)
+            setAudioEncoder(MediaRecorder.AudioEncoder.OPUS)
+            setOutputFile(recordingFile.absolutePath)
             try {
                 prepare()
             } catch (e: IOException) {
@@ -294,6 +323,23 @@ class ChatBoxFragment : Fragment(), OnInitListener {
             release()
         }
         mediaRecorder = null
+    }
+
+    private fun audioInputReceived() {
+        binding.messageInputLayout.hint = "Processing..."
+        lifecycleScope.launch {
+            try {
+                val message = SpeechToTextApi.transcribe(recordingFile)
+                recordingFile.delete()
+                addNewMessage(message, ChatMessage.USER)
+                generateReply(message)
+                binding.messageInputLayout.hint = getString(R.string.send_message_hint)
+                binding.messageInput.isFocusableInTouchMode = true
+            } catch (e: Exception) {
+                Log.d(TAG, e.stackTraceToString())
+                // TODO: Handle this error
+            }
+        }
     }
 
 }

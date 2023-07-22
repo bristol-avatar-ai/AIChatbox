@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">AI Chatbox</string>
     <string name="send_message_hint">Ask me anything</string>
-    <string name="send_button_description">Button for sending messages.</string>
+    <string name="action_button_description">Button for sending messages.</string>
     <string name="example_message">This is an example message.</string>
     <string name="action_reset_chat">Reset chat button.</string>
     <string name="loading_message">Loading</string>

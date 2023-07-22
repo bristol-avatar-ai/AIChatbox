@@ -52,13 +52,14 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/message_input_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:hint="@string/send_message_hint"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/send_button">
+            app:layout_constraintEnd_toStartOf="@id/action_button">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/message_input"
@@ -71,28 +72,16 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <ImageButton
-            android:id="@+id/send_button"
+            android:id="@+id/action_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/ic_button_selector"
-            android:contentDescription="@string/send_button_description"
+            android:contentDescription="@string/action_button_description"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_send_message"
+            android:src="@drawable/ic_speak_message"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <Button
-        android:id="@+id/record_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginBottom="70dp"
-        android:text="Record"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/chat_history" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
