@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.TextToSpeech.OnInitListener
 import android.text.Editable
-import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
@@ -23,7 +22,6 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
-import androidx.core.content.PackageManagerCompat.LOG_TAG
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -33,7 +31,7 @@ import com.example.aichatbox.data.ChatBoxViewModel
 import com.example.aichatbox.databinding.FragmentChatBoxBinding
 import com.example.aichatbox.model.ChatMessage
 import com.example.aichatbox.model.ChatService
-import com.example.aichatbox.network.SpeechToTextApi
+import com.example.aichatbox.network.TranscriptionApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -329,7 +327,7 @@ class ChatBoxFragment : Fragment(), OnInitListener {
         binding.messageInputLayout.hint = "Processing..."
         lifecycleScope.launch {
             try {
-                val message = SpeechToTextApi.transcribe(recordingFile)
+                val message = TranscriptionApi.transcribe(recordingFile)
                 recordingFile.delete()
                 addNewMessage(message, ChatMessage.USER)
                 generateReply(message)
