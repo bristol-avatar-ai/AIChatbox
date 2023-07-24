@@ -5,4 +5,7 @@
     <string name="example_message">This is an example message.</string>
     <string name="action_reset_chat">Reset chat button.</string>
     <string name="loading_message">Loading</string>
+    <string name="audio_permission_dialog_title">Permissions Required</string>
+    <string name="audio_permission_dialog_message">Please allow audio recording permissions to access Speech to Text functionality.</string>
+    <string name="audio_permission_dialog_button">OK</string>
 </resources>
