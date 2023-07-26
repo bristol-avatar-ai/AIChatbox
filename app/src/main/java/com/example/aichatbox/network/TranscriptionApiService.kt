@@ -4,7 +4,6 @@ import android.util.Log
 import com.example.aichatbox.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -38,7 +37,7 @@ private const val CONFIDENCE_THRESHOLD = 0.3f
 // is called on the transcription request.
 private const val TIMEOUT_DURATION = 6000L
 
-// Speech to Text Service file size limits.
+// Speech to Text Service file size limits (bytes).
 private const val MIN_FILE_SIZE = 100
 private const val MAX_FILE_SIZE = 104857600
 
@@ -99,7 +98,9 @@ object TranscriptionApi {
         retrofit.create(TranscriptionApiService::class.java)
     }
 
-    // This function transcribes an audio file (.ogg) into a String via Watson Speech to Text.
+    /*
+    * This function transcribes an audio file (.ogg) into a String via Watson Speech to Text.
+     */
     suspend fun transcribe(file: File): String {
         validateFile(file)
         // Create authentication header.
@@ -111,21 +112,25 @@ object TranscriptionApi {
         return requestTranscription(authHeader, requestBody)
     }
 
-    // This function checks if the file is readable and within allowed
-    // size limits. A maximum of 100 MB and a minimum of 100 bytes is allowed.
+    /*
+    * This function checks if the file is readable and within allowed
+    * size limits. A maximum of 100 MB and a minimum of 100 bytes is allowed.
+     */
     private fun validateFile(file: File) {
         try {
             if (file.length() !in MIN_FILE_SIZE..MAX_FILE_SIZE) {
                 throw TranscriptionAPIServiceException.InvalidFileSizeException()
             }
         } catch (e: Exception) {
-            Log.e(TAG, e.stackTraceToString())
+            Log.e(TAG, "validateFile: failed to read file", e)
             throw TranscriptionAPIServiceException.InvalidFileException()
         }
     }
 
-    // This function requests a transcription from the Speech to
-    // Text service and processes the response.
+    /*
+    * This function requests a transcription from the Speech to
+    * Text service and processes the response.
+     */
     private suspend fun requestTranscription(
         authHeader: String, requestBody: RequestBody
     ): String {
@@ -140,12 +145,15 @@ object TranscriptionApi {
                     // Join remaining transcripts with newline separators.
                     .joinToString("\n") { it.alternatives[0].transcript }
             }
-        } catch (e: TimeoutCancellationException) {
-            Log.e(TAG, e.stackTraceToString())
-            throw TranscriptionAPIServiceException.TimeoutException()
         } catch (e: HttpException) {
-            Log.e(TAG, e.stackTraceToString())
+            Log.e(TAG, "requestTranscription: HTTP error", e)
             throw TranscriptionAPIServiceException.HttpException()
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "requestTranscription: no internet connection", e)
+            throw TranscriptionAPIServiceException.NoInternetException()
+        } catch (e: Exception) {
+            Log.e(TAG, "requestTranscription: exception occurred", e)
+            throw e
         }
     }
 

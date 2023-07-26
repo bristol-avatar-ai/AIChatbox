@@ -23,7 +23,7 @@ private const val MAXIMUM_RECORDING_TIME = 30000L
 
 // The minimum required delay (in milliseconds) between start and stop
 // calls.
-private const val MINIMUM_STOP_DELAY = 1000L
+private const val MINIMUM_STOP_DELAY = 300L
 
 /**
  * The AudioRecorder manages an instance of MediaRecorder to record audio
@@ -66,13 +66,14 @@ class AudioRecorder(
             setOutputFormat(OUTPUT_FORMAT)
             setAudioEncoder(AUDIO_ENCODER)
             setOutputFile(recordingFile.absolutePath)
-            try {
-                prepare()
-            } catch (e: Exception) {
-                Log.e(TAG, e.stackTraceToString())
+            try { prepare() } catch (e: Exception) {
+                Log.e(TAG, "start: failed to prepare MediaRecorder", e)
                 throw e
             }
-            start()
+            try { start() } catch (e: Exception) {
+                Log.e(TAG, "start: failed to start MediaRecorder", e)
+                throw e
+            }
             startTime = System.currentTimeMillis()
             // Automatically stop recording after MAXIMUM_RECORDING_TIME.
             autoStopJob = lifecycleCoroutineScope.launch {
