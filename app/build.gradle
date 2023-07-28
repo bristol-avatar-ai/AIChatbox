@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace 'com.example.aichatbox'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.aichatbox"
-        minSdk 24
-        targetSdk 33
+        minSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -20,6 +20,12 @@ android {
     }
 
     buildTypes {
+        all {
+            // IBM Watson Speech to Text Credentials
+            buildConfigField("String", "SPEECH_TO_TEXT_BASE_URL", SPEECH_TO_TEXT_BASE_URL)
+            buildConfigField("String", "SPEECH_TO_TEXT_API_KEY", SPEECH_TO_TEXT_API_KEY)
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -33,6 +39,7 @@ android {
         jvmTarget = '1.8'
     }
     buildFeatures {
+        buildConfig = true
         viewBinding = true
     }
 }
@@ -45,6 +52,8 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+
+    // WEB SERVICE LIBRARIES
     // OkHttp
     implementation "com.squareup.okhttp3:okhttp:4.9.1"
     // Moshi

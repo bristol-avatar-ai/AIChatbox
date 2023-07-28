@@ -1,8 +1,17 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">AI Chatbox</string>
     <string name="send_message_hint">Ask me anything</string>
-    <string name="action_button_description">Button for sending messages.</string>
+    <string name="action_button_description">Button for sending or recording messages.</string>
     <string name="example_message">This is an example message.</string>
     <string name="action_reset_chat">Reset chat button.</string>
     <string name="loading_message">Loading</string>
+    <string name="audio_permission_dialog_title">Permissions Required</string>
+    <string name="audio_permission_dialog_message">Please allow audio recording permissions to access Speech to Text functionality.</string>
+    <string name="audio_permission_dialog_button">OK</string>
+    <string name="recording_message" tools:ignore="TypographyEllipsis">Recording...</string>
+    <string name="processing_message" tools:ignore="TypographyEllipsis">Processing...</string>
+    <string name="speech_error_message">Sorry, I couldn\'t load my speech module. Please check your network connection and try again!</string>
+    <string name="recording_error_message">Sorry, I can\'t hear you right now. Please check your microphone settings, or use the keyboard instead!</string>
+    <string name="error_message">Sorry, something went wrong!</string>
+    <string name="network_error_message">Sorry, I can\'t understand speech at the moment. Please check your WiFi connection, or use the keyboard instead!</string>
 </resources>

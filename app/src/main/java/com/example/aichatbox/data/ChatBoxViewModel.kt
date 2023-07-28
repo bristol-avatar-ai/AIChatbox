@@ -15,7 +15,9 @@ class ChatBoxViewModel : ViewModel() {
     val messages : MutableLiveData<MutableList<ChatMessage>>
         get() = _messages
 
-    // Initialise mutable list of chat _messages.
+    /*
+    * Initialise mutable list of chat _messages.
+     */
     init {
         _messages.value = mutableListOf()
     }

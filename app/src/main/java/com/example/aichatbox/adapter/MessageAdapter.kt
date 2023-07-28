@@ -10,9 +10,8 @@ import com.example.aichatbox.data.ChatBoxViewModel
 import com.example.aichatbox.model.ChatMessage
 
 /**
- * Adaptor for the chatHistory RecycleView.
- * Comments have not been included as this class
- * will likely not be used in production.
+ * Adaptor for the chatHistory RecycleView.Comments have not been
+ * included as this class will likely not be used in production.
  */
 class MessageAdapter(
     private val viewModel: ChatBoxViewModel
