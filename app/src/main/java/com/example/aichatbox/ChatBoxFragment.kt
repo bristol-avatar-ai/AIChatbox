@@ -85,8 +85,6 @@ class ChatBoxFragment : Fragment(), OnInitListener, AudioRecorder.RecordingCompl
         recyclerView.setHasFixedSize(true)
 
         controller = Controller(this, requireContext(), lifecycleScope)
-        // Request audio permission.
-        requestRecordAudioPermissionIfMissing()
 
         // Observe the messages LiveData, passing in the LifecycleOwner and the observer.
         viewModel.messages.observe(viewLifecycleOwner) {
@@ -247,6 +245,8 @@ class ChatBoxFragment : Fragment(), OnInitListener, AudioRecorder.RecordingCompl
         binding.actionButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    // Request audio permission.
+                    requestRecordAudioPermissionIfMissing()
                     if (controller.recordAudioReady
                         && controller.speechMode
                     ) {
