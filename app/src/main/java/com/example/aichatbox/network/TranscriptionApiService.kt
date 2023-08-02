@@ -101,8 +101,10 @@ object TranscriptionApi {
     /*
     * This function transcribes an audio file (.ogg) into a String via Watson Speech to Text.
      */
-    suspend fun transcribe(file: File): String {
-        validateFile(file)
+    suspend fun transcribe(file: File): String? {
+        if (!isValidFile(file)) {
+            return null
+        }
         // Create authentication header.
         val authHeader = okhttp3.Credentials.basic(USERNAME, API_KEY)
         // Create request body as data binary from audio .ogg file.
@@ -116,14 +118,12 @@ object TranscriptionApi {
     * This function checks if the file is readable and within allowed
     * size limits. A maximum of 100 MB and a minimum of 100 bytes is allowed.
      */
-    private fun validateFile(file: File) {
-        try {
-            if (file.length() !in MIN_FILE_SIZE..MAX_FILE_SIZE) {
-                throw TranscriptionAPIServiceException.InvalidFileSizeException()
-            }
+    private fun isValidFile(file: File): Boolean {
+        return try {
+            file.length() in MIN_FILE_SIZE..MAX_FILE_SIZE
         } catch (e: Exception) {
             Log.e(TAG, "validateFile: failed to read file", e)
-            throw TranscriptionAPIServiceException.InvalidFileException()
+            false
         }
     }
 
@@ -133,7 +133,7 @@ object TranscriptionApi {
      */
     private suspend fun requestTranscription(
         authHeader: String, requestBody: RequestBody
-    ): String {
+    ): String? {
         return try {
             withTimeout(TIMEOUT_DURATION) {
                 retrofitService
@@ -146,14 +146,12 @@ object TranscriptionApi {
                     .joinToString("\n") { it.alternatives[0].transcript }
             }
         } catch (e: HttpException) {
-            Log.e(TAG, "requestTranscription: HTTP error", e)
-            throw TranscriptionAPIServiceException.HttpException()
-        } catch (e: java.net.UnknownHostException) {
-            Log.e(TAG, "requestTranscription: no internet connection", e)
-            throw TranscriptionAPIServiceException.NoInternetException()
+            val httpError = e.response()?.errorBody()?.string() ?: "Unknown error"
+            Log.e(TAG, "requestTranscription: HTTP error: $httpError", e)
+            null
         } catch (e: Exception) {
             Log.e(TAG, "requestTranscription: exception occurred", e)
-            throw e
+            null
         }
     }
 
