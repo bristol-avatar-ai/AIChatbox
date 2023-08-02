@@ -5,11 +5,17 @@ import android.icu.text.SimpleDateFormat
 import android.icu.util.TimeZone
 import android.util.Log
 import com.example.aichatbox.database.AppDatabase
+import kotlinx.coroutines.withTimeout
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.Retrofit
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PUT
 import retrofit2.http.Streaming
 import java.io.File
 import java.io.FileOutputStream
@@ -33,6 +39,8 @@ private const val MODEL_ENDPOINT = "/mvb/model.tflite"
 // Request Headers
 private const val AUTHORISATION_HEADER = "Authorization"
 private const val LAST_MODIFIED_HEADER = "If-Modified-Since"
+private const val CONTENT_TYPE_HEADER = "Content-Type"
+private const val CONTENT_TYPE = "application/x-sqlite3"
 
 // RFC 1123 Timestamp Formatting
 private const val RFC_1123_PATTERN = "EEE, dd MMM yyyy HH:mm:ss z"
@@ -40,6 +48,10 @@ private const val RFC_1123_TIMEZONE = "GMT"
 
 // File writing buffer size.
 private const val BUFFER_SIZE = 4096
+
+// Time in milliseconds before a TimeoutException
+// is called on a download (GET) request.
+private const val TIMEOUT_DURATION = 6000L
 
 /*
 * Retrofit object with the base URL. No converter factory
@@ -73,6 +85,18 @@ interface CloudStorageApiService {
     suspend fun getModel(
         @Header(AUTHORISATION_HEADER) bearerToken: String,
         @Header(LAST_MODIFIED_HEADER) dateTime: String
+    ): Response<ResponseBody>
+
+    /*
+    * This function performs a PUT request to to the database
+    * file's endpoint on the server.
+     */
+    @PUT(DATABASE_ENDPOINT)
+    @Streaming
+    suspend fun uploadDatabase(
+        @Header(AUTHORISATION_HEADER) bearerToken: String,
+        @Header(CONTENT_TYPE_HEADER) contentType: String,
+        @Body requestBody: RequestBody
     ): Response<ResponseBody>
 }
 
@@ -133,7 +157,7 @@ object CloudStorageApi {
         } else if (response.isSuccessful) {
             response.body() ?: return false
         } else {
-            Log.e(TAG, "HTTP error: ${response.code()} - ${response.message()}")
+            Log.e(TAG, "$option upload: HTTP error: ${response.code()} - ${response.message()}")
             return false
         }
         return writeToFile(file, responseBody)
@@ -152,17 +176,19 @@ object CloudStorageApi {
         // Get a valid IAM token, return null if unsuccessful.
         val token = TokenApi.getToken() ?: return null
         return try {
-            when (option) {
-                Option.DATABASE -> retrofitService.getDatabase(
-                    "Bearer $token", getLastModified(localFile)
-                )
+            withTimeout(TIMEOUT_DURATION) {
+                when (option) {
+                    Option.DATABASE -> retrofitService.getDatabase(
+                        "Bearer $token", getLastModified(localFile)
+                    )
 
-                Option.MODEL -> retrofitService.getModel(
-                    "Bearer $token", getLastModified(localFile)
-                )
+                    Option.MODEL -> retrofitService.getModel(
+                        "Bearer $token", getLastModified(localFile)
+                    )
+                }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "getFileFromServer: exception occurred", e)
+            Log.e(TAG, "getFileFromServer: $option: exception occurred", e)
             null
         }
     }
@@ -198,10 +224,10 @@ object CloudStorageApi {
 
         return try {
             writeData(file, responseBody)
-            Log.i(TAG, "Local database updated")
+            Log.i(TAG, "${file.path} updated")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "writeToFile: exception occurred", e)
+            Log.e(TAG, "writeToFile: ${file.path}: exception occurred", e)
             false
         }
     }
@@ -219,6 +245,32 @@ object CloudStorageApi {
                     outputStream.write(buffer, 0, bytesRead)
                 }
             }
+        }
+    }
+
+    /*
+    * This function uploads the local database file to the server.
+    * The returned Boolean indicates if the upload was successful.
+     */
+    suspend fun uploadDatabase(context: Context): Boolean {
+        val token = TokenApi.getToken() ?: return false
+        val file = File(context.filesDir, AppDatabase.FILENAME)
+        // Convert file content into RequestBody object using CONTENT_TYPE.
+        val requestBody = file.asRequestBody(CONTENT_TYPE.toMediaTypeOrNull())
+
+        return try {
+            val response =
+                retrofitService.uploadDatabase("Bearer $token", CONTENT_TYPE, requestBody)
+            if (response.isSuccessful) {
+                Log.i(TAG, "Database was uploaded successfully")
+                true
+            } else {
+                Log.e(TAG, "uploadDatabase: HTTP error: ${response.code()} - ${response.message()}")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "uploadDatabase: exception occurred", e)
+            false
         }
     }
 
