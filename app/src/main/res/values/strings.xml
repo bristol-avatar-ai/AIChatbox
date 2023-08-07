@@ -12,6 +12,5 @@
     <string name="processing_message" tools:ignore="TypographyEllipsis">Processing...</string>
     <string name="speech_error_message">Sorry, I couldn\'t load my speech module. Please check your network connection and try again!</string>
     <string name="recording_error_message">Sorry, I can\'t hear you right now. Please check your microphone settings, or use the keyboard instead!</string>
-    <string name="error_message">Sorry, something went wrong!</string>
-    <string name="network_error_message">Sorry, I can\'t understand speech at the moment. Please check your WiFi connection, or use the keyboard instead!</string>
+    <string name="network_error_message">Sorry, something went wrong. Please check your network connection and try again.</string>
 </resources>

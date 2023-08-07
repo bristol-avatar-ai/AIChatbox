@@ -1,4 +1,4 @@
-package com.example.aichatbox.data
+package com.example.aichatbox.viewmodel
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel

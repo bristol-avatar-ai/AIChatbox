@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace 'com.example.aichatbox'
-    compileSdk 34
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.example.aichatbox"
         minSdk 33
-        targetSdk 34
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 

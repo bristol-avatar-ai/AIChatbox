@@ -24,11 +24,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.example.aichatbox.adapter.MessageAdapter
 import com.example.aichatbox.audio.AudioRecorder
-import com.example.aichatbox.data.ChatBoxViewModel
 import com.example.aichatbox.databinding.FragmentChatBoxBinding
 import com.example.aichatbox.model.ChatMessage
-import com.example.aichatbox.network.TranscriptionAPIServiceException
 import com.example.aichatbox.network.TranscriptionApi
+import com.example.aichatbox.viewmodel.ChatBoxViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -85,8 +84,6 @@ class ChatBoxFragment : Fragment(), OnInitListener, AudioRecorder.RecordingCompl
         recyclerView.setHasFixedSize(true)
 
         controller = Controller(this, requireContext(), lifecycleScope)
-        // Request audio permission.
-        requestRecordAudioPermissionIfMissing()
 
         // Observe the messages LiveData, passing in the LifecycleOwner and the observer.
         viewModel.messages.observe(viewLifecycleOwner) {
@@ -247,6 +244,8 @@ class ChatBoxFragment : Fragment(), OnInitListener, AudioRecorder.RecordingCompl
         binding.actionButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    // Request audio permission.
+                    requestRecordAudioPermissionIfMissing()
                     if (controller.recordAudioReady
                         && controller.speechMode
                     ) {
@@ -373,16 +372,17 @@ class ChatBoxFragment : Fragment(), OnInitListener, AudioRecorder.RecordingCompl
     * file, and then generates a reply.
      */
     private suspend fun replyToSpeech() {
-        try {
-            val message = TranscriptionApi.transcribe(controller.recordingFile)
+        val message = TranscriptionApi.transcribe(controller.recordingFile)
+        if (controller.recordingFile.exists()) {
             controller.recordingFile.delete()
+        }
+        if (message != null) {
             addNewMessage(message, ChatMessage.USER)
             generateReply(message)
-        } catch (e: TranscriptionAPIServiceException.NoInternetException) {
+        } else {
             replyWithMessage(R.string.network_error_message)
-        } catch (e: Exception) {
-            replyWithMessage(R.string.error_message)
         }
+
     }
 
     /*

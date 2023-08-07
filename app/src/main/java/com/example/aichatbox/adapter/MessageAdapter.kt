@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.aichatbox.R
-import com.example.aichatbox.data.ChatBoxViewModel
+import com.example.aichatbox.viewmodel.ChatBoxViewModel
 import com.example.aichatbox.model.ChatMessage
 
 /**
